@@ -7,7 +7,7 @@ from typing import Optional
 import numpy
 
 from optuna._transform import _SearchSpaceTransform
-from optuna.importance._base import _get_distributions
+from optuna.importance._base import _get_distributions, _get_trans_params_values
 from optuna.importance._base import BaseImportanceEvaluator
 from optuna.importance._fanova._fanova import _Fanova
 from optuna.study import Study
@@ -78,15 +78,8 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
         *,
         target: Optional[Callable[[FrozenTrial], float]] = None,
     ) -> Dict[str, float]:
-        if target is None and study._is_multi_objective():
-            raise ValueError(
-                "If the `study` is being used for multi-objective optimization, "
-                "please specify the `target`. For example, use "
-                "`target=lambda t: t.values[0]` for the first objective value."
-            )
-
         distributions = _get_distributions(study, params)
-        if len(distributions) == 0:
+        if len(distributions) == 0:  # `params` were given but as an empty list.
             return OrderedDict()
 
         # fANOVA does not support parameter distributions with a single value.
@@ -95,29 +88,17 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
         zero_importances = {name: 0.0 for name, dist in distributions.items() if dist.single()}
         distributions = {name: dist for name, dist in distributions.items() if not dist.single()}
 
-        trials = []
-        for trial in _filter_nonfinite(
-            study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,)), target=target
-        ):
-            if any(name not in trial.params for name in distributions.keys()):
-                continue
-            trials.append(trial)
+        trials = _filter_nonfinite(
+            study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,)),
+            target=target,
+            distributions=distributions,
+        )
 
         trans = _SearchSpaceTransform(distributions, transform_log=False, transform_step=False)
-
-        n_trials = len(trials)
-        trans_params = numpy.empty((n_trials, trans.bounds.shape[0]), dtype=numpy.float64)
-        trans_values = numpy.empty(n_trials, dtype=numpy.float64)
-
-        for trial_idx, trial in enumerate(trials):
-            trans_params[trial_idx] = trans.transform(trial.params)
-            trans_values[trial_idx] = trial.value if target is None else target(trial)
+        trans_params, trans_values = _get_trans_params_values(trans, trials, target)
 
         trans_bounds = trans.bounds
         column_to_encoded_columns = trans.column_to_encoded_columns
-
-        if trans_params.size == 0:  # `params` were given but as an empty list.
-            return OrderedDict()
 
         # Many (deep) copies of the search spaces are required during the tree traversal and using
         # Optuna distributions will create a bottleneck.

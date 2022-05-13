@@ -87,4 +87,4 @@ def get_param_importances(
     if not isinstance(evaluator, BaseImportanceEvaluator):
         raise TypeError("Evaluator must be a subclass of BaseImportanceEvaluator.")
 
-    return evaluator.evaluate(study, params=params, target=target)
+    return evaluator(study, params=params, target=target)

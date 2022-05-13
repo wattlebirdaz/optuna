@@ -1,5 +1,6 @@
 from typing import Any
 from typing import Callable
+from typing import Dict
 from typing import cast
 from typing import List
 from typing import Optional
@@ -11,6 +12,7 @@ import warnings
 import numpy as np
 
 import optuna
+from optuna.distributions import BaseDistribution
 from optuna.distributions import CategoricalDistribution
 from optuna.distributions import FloatDistribution
 from optuna.distributions import IntDistribution
@@ -141,6 +143,7 @@ def _filter_nonfinite(
     trials: List[FrozenTrial],
     target: Optional[Callable[[FrozenTrial], float]] = None,
     with_message: bool = True,
+    distributions: Optional[Dict[str, BaseDistribution]] = None,
 ) -> List[FrozenTrial]:
 
     # For multi-objective optimization target must be specified to select
@@ -163,6 +166,8 @@ def _filter_nonfinite(
                     f"Trial {trial.number} is omitted in visualization "
                     "because its objective value is inf or nan."
                 )
+        elif distributions is not None and any(name not in trial.params for name in distributions.keys()):
+            continue
         else:
             filtered_trials.append(trial)
 

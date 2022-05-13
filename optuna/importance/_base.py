@@ -4,7 +4,11 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Sequence
 
+import numpy
+
+from optuna._transform import _SearchSpaceTransform
 from optuna.distributions import BaseDistribution
 from optuna.samplers import intersection_search_space
 from optuna.study import Study
@@ -14,6 +18,24 @@ from optuna.trial import TrialState
 
 class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
     """Abstract parameter importance evaluator."""
+
+    def __call__(
+        self,
+        study: Study,
+        params: Optional[List[str]] = None,
+        *,
+        target: Optional[Callable[[FrozenTrial], float]] = None,
+    ) -> Dict[str, float]:
+        if target is None and study._is_multi_objective():
+            raise ValueError(
+                "If the `study` is being used for multi-objective optimization, "
+                "please specify the `target`. For example, use "
+                "`target=lambda t: t.values[0]` for the first objective value."
+            )
+
+        param_importance = self.evaluate(study, params, target=target)
+        assert isinstance(param_importance, OrderedDict)
+        return param_importance
 
     @abc.abstractmethod
     def evaluate(
@@ -104,6 +126,23 @@ def _get_distributions(study: Study, params: Optional[List[str]]) -> Dict[str, B
         sorted(distributions.items(), key=lambda name_and_distribution: name_and_distribution[0])
     )
     return distributions
+
+
+def _get_trans_params_values(
+    trans: _SearchSpaceTransform,
+    trials: Sequence[FrozenTrial],
+    target: Optional[Callable[[FrozenTrial], float]],
+):
+    n_trials = len(trials)
+
+    trans_params = numpy.empty((n_trials, trans.bounds.shape[0]), dtype=numpy.float64)
+    trans_values = numpy.empty(n_trials, dtype=numpy.float64)
+
+    for trial_idx, trial in enumerate(trials):
+        trans_params[trial_idx] = trans.transform(trial.params)
+        trans_values[trial_idx] = trial.value if target is None else target(trial)
+
+    return trans_params, trans_values
 
 
 def _check_evaluate_args(study: Study, params: Optional[List[str]]) -> None:
