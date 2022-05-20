@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import numpy
 
@@ -48,7 +48,7 @@ class MeanDecreaseImpurityImportanceEvaluator(BaseImportanceEvaluator):
         self._trans_values = numpy.empty(0)
         self._param_names: List[str] = list()
 
-    def evaluate(
+    def evaluate_core(
         self, features: numpy.ndarray, values: numpy.ndarray, trans: _SearchSpaceTransform
     ) -> numpy.ndarray:
         forest = self._forest

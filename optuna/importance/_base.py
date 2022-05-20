@@ -111,7 +111,7 @@ def _get_trans_params_values(
 class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
     """Abstract parameter importance evaluator."""
 
-    def __call__(
+    def evaluate(
         self,
         study: Study,
         params: Optional[List[str]] = None,
@@ -147,7 +147,7 @@ class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
         )
         trans_params, values = _get_trans_params_values(trans, trials, target)
 
-        non_single_importance_values = self.evaluate(trans_params, values, trans)
+        non_single_importance_values = self.evaluate_core(trans_params, values, trans)
         non_single_importances = {
             name: value
             for name, value in zip(non_single_distributions.keys(), non_single_importance_values)
@@ -162,7 +162,7 @@ class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
         return sorted_importances
 
     @abc.abstractmethod
-    def evaluate(
+    def evaluate_core(
         self, trans_params: numpy.ndarray, values: numpy.ndarray, trans: _SearchSpaceTransform
     ) -> numpy.ndarray:
         """Evaluate parameter importances based on completed trials in the given study.

@@ -62,7 +62,7 @@ class FanovaImportanceEvaluator(BaseImportanceEvaluator):
             seed=seed,
         )
 
-    def evaluate(
+    def evaluate_core(
         self, features: numpy.ndarray, values: numpy.ndarray, trans: _SearchSpaceTransform
     ) -> numpy.ndarray:
         evaluator = self._evaluator
