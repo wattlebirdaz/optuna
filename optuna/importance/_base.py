@@ -148,11 +148,11 @@ class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
         trans_params, values = _get_trans_params_values(trans, trials, target)
 
         non_single_importance_values = self.evaluate(trans_params, values, trans)
-        single_importances = {name: 0.0 for name in single_distributions.keys()}
         non_single_importances = {
             name: value
             for name, value in zip(non_single_distributions.keys(), non_single_importance_values)
         }
+        single_importances = {name: 0.0 for name in single_distributions.keys()}
         importances = {**non_single_importances, **single_importances}
         sorted_importances = OrderedDict(
             reversed(
