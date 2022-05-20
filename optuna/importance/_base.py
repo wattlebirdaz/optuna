@@ -124,7 +124,6 @@ class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
                 "please specify the `target`. For example, use "
                 "`target=lambda t: t.values[0]` for the first objective value."
             )
-        print(params)
         distributions = _get_distributions(study, params)
         if len(distributions) == 0:  # `params` were given but as an empty list.
             return OrderedDict()
@@ -149,8 +148,6 @@ class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
         trans_params, values = _get_trans_params_values(trans, trials, target)
 
         non_single_importance_values = self.evaluate(trans_params, values, trans)
-        print(non_single_importance_values)
-
         single_importances = {name: 0.0 for name in single_distributions.keys()}
         non_single_importances = {
             name: value
