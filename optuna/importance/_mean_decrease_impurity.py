@@ -44,6 +44,9 @@ class MeanDecreaseImpurityImportanceEvaluator(BaseImportanceEvaluator):
             min_samples_leaf=1,
             random_state=seed,
         )
+        self._trans_params = numpy.empty(0)
+        self._trans_values = numpy.empty(0)
+        self._param_names: List[str] = list()
 
     def evaluate(
         self, features: numpy.ndarray, values: numpy.ndarray, trans: _SearchSpaceTransform

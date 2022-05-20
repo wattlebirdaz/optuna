@@ -1,7 +1,6 @@
 import collections
 import itertools
 from typing import Any
-from typing import cast
 from typing import Dict
 from typing import List
 from typing import Mapping
@@ -21,7 +20,6 @@ from optuna.trial import TrialState
 
 
 GridValueType = Union[str, float, int, bool, None]
-SortableParamValueSequenceType = Union[List[str], List[float], List[int], List[bool]]
 
 
 _logger = get_logger(__name__)
@@ -86,11 +84,6 @@ class GridSampler(BaseSampler):
         The total number of actual trials may therefore exceed the size of the grid.
 
     Note:
-        The grid is randomly shuffled and the order in which parameter configurations are
-        suggested may vary. This is to reduce duplicate suggestions during distributed
-        optimization.
-
-    Note:
         All parameters must be specified when using :class:`~optuna.samplers.GridSampler` with
         :meth:`~optuna.study.Study.enqueue_trial`.
 
@@ -98,7 +91,11 @@ class GridSampler(BaseSampler):
         search_space:
             A dictionary whose key and value are a parameter name and the corresponding candidates
             of values, respectively.
-        seed: A seed to specify the order of trials as the grid is randomly shuffled.
+        seed:
+            A seed to fix the order of trials as the grid is randomly shuffled. Please note that
+            it is not recommended using this option in distributed optimization settings since
+            this option cannot ensure the order of trials and may increase the number of duplicate
+            suggestions during distributed optimization.
     """
 
     def __init__(
@@ -110,10 +107,8 @@ class GridSampler(BaseSampler):
                 self._check_value(param_name, value)
 
         self._search_space = collections.OrderedDict()
-        for param_name, param_values in sorted(search_space.items(), key=lambda x: x[0]):
-            param_values = cast(SortableParamValueSequenceType, param_values)
-
-            self._search_space[param_name] = sorted(param_values)
+        for param_name, param_values in sorted(search_space.items()):
+            self._search_space[param_name] = param_values
 
         self._all_grids = list(itertools.product(*self._search_space.values()))
         self._param_names = sorted(search_space.keys())
@@ -265,8 +260,7 @@ class GridSampler(BaseSampler):
             if len(search_space[param_name]) != len(self._search_space[param_name]):
                 return False
 
-            param_values = cast(SortableParamValueSequenceType, search_space[param_name])
-            for i, param_value in enumerate(sorted(param_values)):
+            for i, param_value in enumerate(search_space[param_name]):
                 if param_value != self._search_space[param_name][i]:
                     return False
 

@@ -83,7 +83,6 @@ def get_param_importances(
     """
     if evaluator is None:
         evaluator = FanovaImportanceEvaluator()
-
     if not isinstance(evaluator, BaseImportanceEvaluator):
         raise TypeError("Evaluator must be a subclass of BaseImportanceEvaluator.")
 

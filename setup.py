@@ -92,10 +92,11 @@ def get_extras_require() -> Dict[str, List[str]]:
         ],
         "experimental": ["redis"],
         "testing": [
+            "shap",
             "chainer>=5.0.0",
             "cma",
-            # TODO(HideakiImamura): Remove the version constraint after the next release.
-            "fakeredis<=1.7.1",
+            "fakeredis<=1.7.1; python_version<'3.8'",
+            "fakeredis ; python_version>='3.8'",
             "lightgbm",
             "matplotlib>=3.0.0",
             "mlflow",
@@ -128,8 +129,8 @@ def get_extras_require() -> Dict[str, List[str]]:
             "fastai ; python_version>'3.6' and python_version<'3.10'",
         ],
         "tests": [
-            # TODO(HideakiImamura): Remove the version constraint after the next release.
-            "fakeredis<=1.7.1",
+            "fakeredis<=1.7.1; python_version<'3.8'",
+            "fakeredis ; python_version>='3.8'",
             "pytest",
         ],
         "optional": [
@@ -141,6 +142,7 @@ def get_extras_require() -> Dict[str, List[str]]:
             # optuna/visualization/param_importances.py.
         ],
         "integration": [
+            "shap",
             "catboost>=0.26",
             "chainer>=5.0.0",
             "cma",

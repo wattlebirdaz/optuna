@@ -18,8 +18,8 @@ from optuna.trial import TrialState
 from optuna.trial._filter_nonfinite import _filter_nonfinite
 
 
-def _check_evaluate_args(study: Study, params: Optional[List[str]]) -> None:
-    completed_trials = list(filter(lambda t: t.state == TrialState.COMPLETE, study.trials))
+
+def _check_evaluate_args(completed_trials: List[FrozenTrial], params: Optional[List[str]]) -> None:
     if len(completed_trials) == 0:
         raise ValueError("Cannot evaluate parameter importances without completed trials.")
     if len(completed_trials) == 1:
@@ -50,7 +50,8 @@ def _check_evaluate_args(study: Study, params: Optional[List[str]]) -> None:
 
 
 def _get_distributions(study: Study, params: Optional[List[str]]) -> Dict[str, BaseDistribution]:
-    _check_evaluate_args(study, params)
+    completed_trials = study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,))
+    _check_evaluate_args(completed_trials, params)
 
     if params is None:
         return intersection_search_space(study, ordered_dict=True)
@@ -61,10 +62,7 @@ def _get_distributions(study: Study, params: Optional[List[str]]) -> Dict[str, B
 
     # Compute the search space based on the subset of trials containing all parameters.
     distributions = None
-    for trial in study.trials:
-        if trial.state != TrialState.COMPLETE:
-            continue
-
+    for trial in completed_trials:
         trial_distributions = trial.distributions
         if not all(name in trial_distributions for name in params_not_none):
             continue
@@ -92,7 +90,6 @@ def _get_distributions(study: Study, params: Optional[List[str]]) -> Dict[str, B
         sorted(distributions.items(), key=lambda name_and_distribution: name_and_distribution[0])
     )
     return distributions
-
 
 def _get_trans_params_values(
     trans: _SearchSpaceTransform,
@@ -127,7 +124,7 @@ class BaseImportanceEvaluator(object, metaclass=abc.ABCMeta):
                 "please specify the `target`. For example, use "
                 "`target=lambda t: t.values[0]` for the first objective value."
             )
-
+        print(params)
         distributions = _get_distributions(study, params)
         if len(distributions) == 0:  # `params` were given but as an empty list.
             return OrderedDict()
