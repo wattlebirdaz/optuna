@@ -1,7 +1,5 @@
 from typing import Any
 from typing import Callable
-from typing import Dict
-from typing import cast
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -9,10 +7,7 @@ from typing import Set
 from typing import Union
 import warnings
 
-import numpy as np
-
 import optuna
-from optuna.distributions import BaseDistribution
 from optuna.distributions import CategoricalDistribution
 from optuna.distributions import FloatDistribution
 from optuna.distributions import IntDistribution
@@ -137,41 +132,6 @@ def _get_skipped_trial_numbers(
                 skipped_trial_numbers.add(trial.number)
                 break
     return skipped_trial_numbers
-
-
-def _filter_nonfinite(
-    trials: List[FrozenTrial],
-    target: Optional[Callable[[FrozenTrial], float]] = None,
-    with_message: bool = True,
-    distributions: Optional[Dict[str, BaseDistribution]] = None,
-) -> List[FrozenTrial]:
-
-    # For multi-objective optimization target must be specified to select
-    # one of objective values to filter trials by (and plot by later on).
-    # This function is not raising when target is missing, sice we're
-    # assuming plot args have been sanitized before.
-    if target is None:
-
-        def _target(t: FrozenTrial) -> float:
-            return cast(float, t.value)
-
-        target = _target
-
-    filtered_trials: List[FrozenTrial] = []
-    for trial in trials:
-        # Not a Number, positive infinity and negative infinity are considered to be non-finite.
-        if not np.isfinite(target(trial)):
-            if with_message:
-                _logger.warning(
-                    f"Trial {trial.number} is omitted in visualization "
-                    "because its objective value is inf or nan."
-                )
-        elif distributions is not None and any(name not in trial.params for name in distributions.keys()):
-            continue
-        else:
-            filtered_trials.append(trial)
-
-    return filtered_trials
 
 
 def _is_reverse_scale(study: Study, target: Optional[Callable[[FrozenTrial], float]]) -> bool:

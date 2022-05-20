@@ -14,8 +14,8 @@ from optuna.study import Study
 from optuna.study import StudyDirection
 from optuna.trial import FrozenTrial
 from optuna.trial import TrialState
+from optuna.trial._filter_nonfinite import _filter_nonfinite
 from optuna.visualization._utils import _check_plot_args
-from optuna.visualization._utils import _filter_nonfinite
 from optuna.visualization._utils import _get_param_values
 from optuna.visualization.matplotlib._matplotlib_imports import _imports
 from optuna.visualization.matplotlib._utils import _is_log_scale

@@ -1,19 +1,10 @@
-from collections import OrderedDict
-from typing import Callable
-from typing import Dict
-from typing import List
 from typing import Optional
 
 import numpy
 
 from optuna._imports import try_import
 from optuna._transform import _SearchSpaceTransform
-from optuna.importance._base import _get_distributions, _get_trans_params_values
 from optuna.importance._base import BaseImportanceEvaluator
-from optuna.study import Study
-from optuna.trial import FrozenTrial
-from optuna.trial import TrialState
-from optuna.visualization._utils import _filter_nonfinite
 
 
 with try_import() as _imports:
@@ -55,34 +46,11 @@ class MeanDecreaseImpurityImportanceEvaluator(BaseImportanceEvaluator):
         )
 
     def evaluate(
-        self,
-        study: Study,
-        params: Optional[List[str]] = None,
-        *,
-        target: Optional[Callable[[FrozenTrial], float]] = None,
-    ) -> Dict[str, float]:
-        distributions = _get_distributions(study, params)
-        if len(distributions) == 0:  # `params` were given but as an empty list.
-            return OrderedDict()
-
-        trials = _filter_nonfinite(
-            study.get_trials(deepcopy=False, states=(TrialState.COMPLETE,)),
-            target=target,
-            distributions=distributions,
-        )
-
-        trans = _SearchSpaceTransform(distributions, transform_log=False, transform_step=False)
-        trans_params, trans_values = _get_trans_params_values(trans, trials, target)
-
+        self, features: numpy.ndarray, values: numpy.ndarray, trans: _SearchSpaceTransform
+    ) -> numpy.ndarray:
         forest = self._forest
-        forest.fit(trans_params, trans_values)
+        forest.fit(features, values)
         feature_importances = forest.feature_importances_
-        feature_importances_reduced = numpy.zeros(len(distributions))
-        numpy.add.at(feature_importances_reduced, trans.encoded_column_to_column, feature_importances)
-
-        param_importances = OrderedDict()
-        param_names = list(distributions.keys())
-        for i in feature_importances_reduced.argsort()[::-1]:
-            param_importances[param_names[i]] = feature_importances_reduced[i].item()
-
+        param_importances = numpy.zeros(trans.num_params)
+        numpy.add.at(param_importances, trans.encoded_column_to_column, feature_importances)
         return param_importances

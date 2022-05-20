@@ -10,9 +10,9 @@ from optuna.study import create_study
 from optuna.trial import create_trial
 from optuna.trial import FrozenTrial
 from optuna.trial import TrialState
+from optuna.trial._filter_nonfinite import _filter_nonfinite
 from optuna.visualization import is_available
 from optuna.visualization._utils import _check_plot_args
-from optuna.visualization._utils import _filter_nonfinite
 from optuna.visualization._utils import _is_log_scale
 
 
