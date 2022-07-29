@@ -238,7 +238,7 @@ class JournalStorage(BaseStorage):
                 self._push_log_replay_result(log, ValueError(""))
                 return
 
-            self._studies[study_id]._directions = directions
+            self._studies[study_id]._directions = [StudyDirection(d) for d in directions]
 
             self._push_log_replay_result(log, None)
 
